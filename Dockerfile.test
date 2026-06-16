@@ -1,0 +1,13 @@
+FROM ruby:3.4.9-alpine3.23
+
+ENV COVERAGE=true
+
+RUN apk add --no-cache bash jq shunit2 && \
+    gem install --no-document \
+    bashcov \
+    simplecov:0.22.0 \
+    simplecov-cobertura:3.1.0
+
+USER 1001
+WORKDIR /conjur-action
+COPY . .
