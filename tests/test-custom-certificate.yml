@@ -1,0 +1,37 @@
+name: Test action runs with custom SSL certificate input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with self-signed certificate
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          host_id: "host/github-action"
+          api_key: "fakeapikey"
+          secrets: "db/password"
+          certificate: |
+            -----BEGIN CERTIFICATE-----
+            MIIBpDCCAQ2gAwIBAgIUYWJjZGVmZ2hpamtsbW5vcHFyc3QwDQYJKoZIhvcNAQEL
+            BQAwETEPMA0GA1UEAxMGdGVzdENBMB4XDTIzMDEwMTAwMDAwMFoXDTI0MDEwMTAw
+            MDAwMFowETEPMA0GA1UEAxMGdGVzdENBMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
+            iQKBgQC7o4qne60TB3wolFMgDPqRMFMfTNeaS0sDummyFakeCertForTestingOnly
+            -----END CERTIFICATE-----
+
+      - name: Assert action completed (certificate input does not crash the script)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to complete even with unreachable URL and custom certificate, but got outcome: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed without crashing when certificate is provided"

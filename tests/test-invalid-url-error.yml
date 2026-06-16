@@ -1,0 +1,30 @@
+name: Test action runs with unreachable Conjur URL
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with unreachable Conjur URL
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          host_id: "host/github-action"
+          api_key: "fakeapikey"
+          secrets: "db/password"
+
+      - name: Assert action completed (curl failures do not crash the script)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to complete successfully even with unreachable URL, but got outcome: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed without crashing when given an unreachable Conjur URL"

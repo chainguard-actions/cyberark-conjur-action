@@ -1,0 +1,29 @@
+name: Test action runs with JWT authn_id input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with authn_id (JWT authenticator)
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          authn_id: "my-jwt-service"
+          secrets: "db/password"
+
+      - name: Assert action completed (JWT authn_id path does not crash the script)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to complete even with unreachable URL and authn_id, but got outcome: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed without crashing when authn_id is provided"
