@@ -13,6 +13,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v2.1.0 | [`v2.1.0`](https://github.com/chainguard-actions/cyberark-conjur-action/tree/v2.1.0) | [`845a894`](https://github.com/cyberark/conjur-action/commit/845a8946ac8ddbd0a551979b3cf07565a466a91c) |
 | v2.1.1 | [`v2.1.1`](https://github.com/chainguard-actions/cyberark-conjur-action/tree/v2.1.1) | [`e3b067c`](https://github.com/cyberark/conjur-action/commit/e3b067c9e08add6543947f64bf467ba1dd0b97cc) |
 | v2.2.0 | [`v2.2.0`](https://github.com/chainguard-actions/cyberark-conjur-action/tree/v2.2.0) | [`e10bb95`](https://github.com/cyberark/conjur-action/commit/e10bb95f4119927b03aa0036991e9fefdbd20adf) |
+| v2.2.2 | [`v2.2.2`](https://github.com/chainguard-actions/cyberark-conjur-action/tree/v2.2.2) | [`ad2b18a`](https://github.com/cyberark/conjur-action/commit/ad2b18a49c76f474ebd923d740862429caa70608) |
 
 ## Privacy
 
