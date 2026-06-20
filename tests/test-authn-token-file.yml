@@ -1,0 +1,42 @@
+name: Test authn_token_file input (expect failure - no real Conjur server)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-pull or build conjur-action Docker image
+        run: |
+          docker pull cyberark/conjur-action:2.2.2 || \
+            docker build -t cyberark/conjur-action:2.2.2 . || \
+            echo "Warning: could not pre-pull or build image, will attempt pull during action step"
+
+      - name: Create a dummy authn token file
+        run: |
+          mkdir -p /tmp/conjur-tokens
+          echo '{"protected":"dummyprotected","payload":"dummypayload","signature":"dummysig"}' \
+            > /tmp/conjur-tokens/authn_token.json
+          echo "Token file created at /tmp/conjur-tokens/authn_token.json"
+
+      - name: Run action with authn_token_file input (expect failure)
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myorg"
+          authn_token_file: "/tmp/conjur-tokens/authn_token.json"
+          secrets: "path/to/secret=MY_SECRET"
+
+      - name: Assert action did not succeed
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: expected action to fail (no real Conjur server), but it succeeded"
+            exit 1
+          fi
+          echo "PASS: action correctly failed when using authn_token_file with no real Conjur server (outcome: $OUTCOME)"
