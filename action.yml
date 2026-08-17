@@ -30,7 +30,7 @@ inputs:
     required: false
 runs:
   using: 'docker'
-  image: 'docker://cyberark/conjur-action@sha256:370bd8ac9ad670309dc6c12e157ffc9df992eb4077197cf9127a54230e630e2c' # 2.2.2
+  image: 'docker://cyberark/conjur-action:2.2.2@sha256:370bd8ac9ad670309dc6c12e157ffc9df992eb4077197cf9127a54230e630e2c'
   args:
     - ${{ inputs.url }}
     - ${{ inputs.account }}
