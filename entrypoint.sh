@@ -166,10 +166,9 @@ set_secrets() {
 	    exit 1
         fi
         echo ::add-mask::"${secretVal}" # Masks the value in all logs & output
-        # Sanitize envVar and secretVal to prevent newline injection into GITHUB_ENV
-        safeEnvVar=$(printf '%s' "${envVar}" | tr -d '\n\r')
-        safeSecretVal=$(printf '%s' "${secretVal}" | tr -d '\n\r')
-        echo "${safeEnvVar}=${safeSecretVal}" >> "${GITHUB_ENV}" # Set environment variable
+        safe_envVar=$(printf '%s' "${envVar}" | tr -d '\n\r')
+        safe_secretVal=$(printf '%s' "${secretVal}" | tr -d '\n\r')
+        echo "${safe_envVar}=${safe_secretVal}" >> "${GITHUB_ENV}" # Set environment variable
     done
   else 
    echo "::error::No secret found for retrieval from Conjur Vault"

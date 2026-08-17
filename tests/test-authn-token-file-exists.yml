@@ -1,0 +1,44 @@
+name: Test authn_token_file with existing token file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create token file in workspace
+        run: |
+          # The Docker action mounts GITHUB_WORKSPACE at /github/workspace inside the container.
+          # Create a fake token file there so the action can read it.
+          echo "ZmFrZXRva2Vu" > "$GITHUB_WORKSPACE/conjur-token.txt"
+          echo "Token file created: $GITHUB_WORKSPACE/conjur-token.txt"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          authn_token_file: "/github/workspace/conjur-token.txt"
+          secrets: "db/password | DB_PASSWORD"
+
+      - name: Assert action exits successfully with token file
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # With a valid token file and unreachable URL:
+          # - The action reads the token from the file successfully
+          # - curl to fetch secrets fails (connection refused) → empty secretVal
+          # - Empty secretVal does not match error conditions → action exits 0
+          # Expected outcome: success (exit 0)
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) with valid token file, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed successfully using token from file"
+
+      - name: Cleanup token file
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE/conjur-token.txt"

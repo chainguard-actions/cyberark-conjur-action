@@ -1,0 +1,35 @@
+name: Test action completes with unreachable Conjur URL
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          host_id: "host/github-action"
+          api_key: "fake-api-key"
+          secrets: "db/password | DB_PASSWORD"
+
+      - name: Assert action exits successfully with unreachable URL
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # With an unreachable URL and invalid credentials:
+          # - curl to authenticate fails (connection refused) → empty token (stderr only)
+          # - curl to fetch secrets fails → empty secretVal (stderr only)
+          # - Empty secretVal does not match "Malformed authorization token" or
+          #   "is empty or not found" → action sets empty env var and exits 0
+          # Expected outcome: success (exit 0)
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) with unreachable URL, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed successfully (empty secrets set, no crash)"

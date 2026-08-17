@@ -1,0 +1,42 @@
+name: Test action with self-signed certificate input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          host_id: "host/github-action"
+          api_key: "fake-api-key"
+          secrets: "db/password | DB_PASSWORD"
+          certificate: |
+            -----BEGIN CERTIFICATE-----
+            MIICpDCCAYwCCQDU+pQ4pHgSpDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+            b2NhbGhvc3QwHhcNMjMwMTAxMDAwMDAwWhcNMjQwMTAxMDAwMDAwWjAUMRIwEAYD
+            VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7
+            o4qne60TB3pOGHMBjgDiAqCBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+            -----END CERTIFICATE-----
+
+      - name: Assert action completes when certificate is provided
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # With a certificate provided and an unreachable URL:
+          # - The action writes the certificate to a temp file for curl
+          # - curl to authenticate fails (connection refused) → empty token
+          # - curl to fetch secrets also fails → empty secretVal
+          # - Empty secretVal does not match error conditions → action exits 0
+          # Expected outcome: success (exit 0)
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) with certificate input, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed successfully with certificate input"

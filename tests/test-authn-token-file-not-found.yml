@@ -1,0 +1,33 @@
+name: Test authn_token_file with missing file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          authn_token_file: "/nonexistent/conjur-token.json"
+          secrets: "db/password | DB_PASSWORD"
+
+      - name: Assert action exits successfully despite missing token file
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # With a non-existent token file and unreachable URL:
+          # - get_token_from_file prints an error to stdout (captured as token value)
+          # - curl to fetch secrets fails (connection refused) → empty secretVal
+          # - Empty secretVal does not match error conditions → action exits 0
+          # Expected outcome: success (exit 0)
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) with missing token file, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action completed successfully (error message used as token, empty secret set)"
