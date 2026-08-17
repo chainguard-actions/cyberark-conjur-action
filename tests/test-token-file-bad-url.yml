@@ -1,0 +1,29 @@
+name: Test token file auth with unreachable URL exits gracefully
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with token file and unreachable URL
+        id: action
+        continue-on-error: true
+        uses: .
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          authn_token_file: "/tmp/nonexistent-token.json"
+          secrets: "db/password | MY_SECRET"
+
+      - name: Assert action ran without crashing
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The entrypoint does not use set -e and does not check curl exit codes.
+          # Even with an unreachable URL and missing token file, the action exits 0.
+          if [ "${{ steps.action.outcome }}" = "failure" ]; then
+            echo "FAIL: action unexpectedly failed (Docker build or startup error?)"
+            exit 1
+          fi
+          echo "PASS: action ran without crashing despite unreachable URL and missing token file"

@@ -1,0 +1,31 @@
+name: Test invalid URL with API key auth exits gracefully
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with invalid URL and API key
+        id: action
+        continue-on-error: true
+        uses: .
+        with:
+          url: "http://127.0.0.1:19999"
+          account: "myaccount"
+          host_id: "host/github-action"
+          api_key: "fake-api-key"
+          secrets: "db/password | MY_SECRET"
+
+      - name: Assert action ran (curl errors are silent, action exits 0)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The action does not use set -e and does not check curl exit codes,
+          # so it exits 0 even when the Conjur URL is unreachable.
+          # A 'failure' outcome would indicate a Docker build or startup error.
+          if [ "${{ steps.action.outcome }}" = "failure" ]; then
+            echo "FAIL: action unexpectedly failed (Docker build or startup error?)"
+            exit 1
+          fi
+          echo "PASS: action ran without crashing despite unreachable Conjur URL"
