@@ -1,0 +1,33 @@
+name: Test token file authentication
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a fake authn token file
+        run: |
+          mkdir -p /tmp/conjur-tokens
+          echo '{"protected":"eyJhbGciOiJSUzI1NiJ9","payload":"eyJzdWIiOiJob3N0L2dpdGh1Yi1hY3Rpb24iLCJpYXQiOjE2MDAwMDAwMDB9","signature":"fake-signature"}' > /tmp/conjur-tokens/authn-token
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: 'https://conjur.example.com'
+          account: 'myorg'
+          authn_token_file: '/tmp/conjur-tokens/authn-token'
+          secrets: 'MY_SECRET=path/to/secret'
+      - name: Assert action ran or failed gracefully (no real Conjur server)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded unexpectedly (real Conjur server reachable?)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Conjur server)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

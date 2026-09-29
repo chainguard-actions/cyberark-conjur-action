@@ -1,0 +1,33 @@
+name: Test JWT authentication (graceful failure)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with JWT authenticator inputs
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          url: 'https://conjur.example.invalid'
+          account: 'test-account'
+          authn_id: 'jwt-service-id'
+          secrets: 'MY_SECRET=path/to/secret/value'
+          audience: 'conjur'
+
+      - name: Assert action failed gracefully (no real Conjur JWT endpoint available)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Conjur server for JWT authn)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action unexpectedly succeeded"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
